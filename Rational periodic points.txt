@@ -1,0 +1,207 @@
+
+//// This file contains the code used in the proof of Proposition 5.4 of the article.
+
+
+//// Code for computing dynatomic polynomials
+
+DynatomicPolynomial := function(f,n)
+z := Parent(f).1;
+Phi := Parent(f) ! 1;
+for d in Divisors(n) do
+fd := z;
+for i := 1 to d do
+fd := Evaluate(fd,f);
+end for;
+pd := Numerator(fd);
+qd := Denominator(fd);
+Phi := Phi*(z*qd - pd)^MoebiusMu(n div d);
+end for;
+return Phi;
+end function;
+
+
+//// *** Calculations for the proof of Proposition 5.4 *** ////
+
+F<r> := PolynomialRing(Rationals());
+R<x> := PolynomialRing(F);
+
+phi := (2*x^2 + (2 - r)*x + (2 - r))/(-x^2 + (2 + r)*x + 2 + r);
+phi2 := Evaluate(phi,phi);
+phi3 := Evaluate(phi2,phi);
+phi4 := Evaluate(phi3,phi);
+phi5 := Evaluate(phi4,phi);
+
+f5 := x + phi + phi2 + phi3 + phi4;
+f6 := f5 + phi5;
+
+Phi5 := DynatomicPolynomial(phi,5);
+Denominator(Phi5) eq 1;
+Phi5 := Numerator(Phi5);
+
+Phi6 := DynatomicPolynomial(phi,6);
+Denominator(Phi6) eq 1;
+Phi6 := Numerator(Phi6);
+
+//// Consider period 5 first.
+
+//// Computing the polynomial T(x) from Lemma 5.5
+
+q := Numerator(f5);
+h := Denominator(f5);
+
+_<y> := PolynomialRing(R);
+Phi5y := Evaluate(Phi5,y);
+hy := Evaluate(h,y);
+qy := Evaluate(q,y); 
+Factorization(ExactQuotient(Resultant(Phi5y,hy*x - qy),Resultant(Phi5,h)));
+
+
+/*
+
+Output:
+
+[
+    <x^6 + (-7*r + 18)*x^5 + (19*r^2 - 108*r + 168)*x^4 + (-25*r^3 + 250*r^2 -
+        748*r + 1112)*x^3 + (20*r^4 - 192*r^3 + 1887*r^2 - 1180*r + 7596)*x^2 +
+        (-12*r^5 - 6*r^4 - 1812*r^3 + 1966*r^2 - 4536*r + 25080)*x + 7*r^6 +
+        132*r^5 + 1754*r^4 + 7136*r^3 + 34411*r^2 + 60932*r + 94828, 5>
+]
+
+*/
+
+
+//// Finding all rational points on the curve X5.
+
+AA<r,x> := AffineSpace(Rationals(),2);
+tau := x^6 + (-7*r + 18)*x^5 + (19*r^2 - 108*r + 168)*x^4 + (-25*r^3 + 250*r^2 -
+        748*r + 1112)*x^3 + (20*r^4 - 192*r^3 + 1887*r^2 - 1180*r + 7596)*x^2 +
+        (-12*r^5 - 6*r^4 - 1812*r^3 + 1966*r^2 - 4536*r + 25080)*x + 7*r^6 +
+        132*r^5 + 1754*r^4 + 7136*r^3 + 34411*r^2 + 60932*r + 94828;
+X5 := Curve(AA,tau);
+conic, map := Conic(ProjectiveClosure(X5));
+BasePoints(map);
+HasRationalPoint(conic);
+
+/*
+
+Output:
+
+{@ (-6 : -10 : 1) @}
+
+false
+
+*/
+
+
+//// Next we consider period 6.
+
+x := R.1;
+q := Numerator(f6);
+h := Denominator(f6);
+
+_<y> := PolynomialRing(R);
+Phi6y := Evaluate(Phi6,y);
+hy := Evaluate(h,y);
+qy := Evaluate(q,y); 
+Factorization(ExactQuotient(Resultant(Phi6y,hy*x - qy),Resultant(Phi6,h)));
+
+
+/*
+
+Output:
+
+[
+    <x^9 + (-14*r + 24)*x^8 + (82*r^2 - 324*r + 288)*x^7 + (-260*r^3 + 1832*r^2 
+        - 3387*r + 2718)*x^6 + (485*r^4 - 5522*r^3 + 17326*r^2 - 24504*r + 
+        20664)*x^5 + (-538*r^5 + 9654*r^4 - 45930*r^3 + 107868*r^2 - 120168*r + 
+        132624)*x^4 + (335*r^6 - 9970*r^5 + 67292*r^4 - 240874*r^3 + 423927*r^2 
+        - 412884*r + 688284)*x^3 + (-91*r^7 + 5972*r^6 - 53097*r^5 + 284632*r^4 
+        - 731324*r^3 + 1033092*r^2 - 1066608*r + 2518992)*x^2 + (-1638*r^7 + 
+        26091*r^6 - 102390*r^5 + 1001480*r^4 + 384428*r^3 + 5412024*r^2 + 
+        3446064*r + 8775648)*x - 7371*r^7 - 4698*r^6 - 359147*r^5 + 309360*r^4 +
+        525103*r^3 + 7924734*r^2 + 10644804*r + 13905000, 6>
+]
+
+*/
+
+
+//// Finding all rational points on the curve X6.
+
+AA<r,x> := AffineSpace(Rationals(),2);
+tau := x^9 + (-14*r + 24)*x^8 + (82*r^2 - 324*r + 288)*x^7 + (-260*r^3 + 1832*r^2 
+        - 3387*r + 2718)*x^6 + (485*r^4 - 5522*r^3 + 17326*r^2 - 24504*r + 
+        20664)*x^5 + (-538*r^5 + 9654*r^4 - 45930*r^3 + 107868*r^2 - 120168*r + 
+        132624)*x^4 + (335*r^6 - 9970*r^5 + 67292*r^4 - 240874*r^3 + 423927*r^2 
+        - 412884*r + 688284)*x^3 + (-91*r^7 + 5972*r^6 - 53097*r^5 + 284632*r^4 
+        - 731324*r^3 + 1033092*r^2 - 1066608*r + 2518992)*x^2 + (-1638*r^7 + 
+        26091*r^6 - 102390*r^5 + 1001480*r^4 + 384428*r^3 + 5412024*r^2 + 
+        3446064*r + 8775648)*x - 7371*r^7 - 4698*r^6 - 359147*r^5 + 309360*r^4 +
+        525103*r^3 + 7924734*r^2 + 10644804*r + 13905000;
+X6 := Curve(AA,tau);
+_,X,map1 := IsHyperelliptic(X6);
+XS,map2 := SimplifiedModel(X);
+XS;
+
+/*
+
+Output:
+
+Hyperelliptic Curve defined by y^2 = x^6 - 6*x^5 - x^4 - x^2 + 2*x - 3 over 
+Rational Field
+
+*/
+
+J := Jacobian(XS);
+RankBounds(J);
+P := J ! [XS![1,-1,0],XS![1,1,0]];
+Order(P); // 0 indicates infinite order.
+XS_points := Chabauty(P);
+XS_points;
+
+/*
+
+Output:
+
+1 1
+
+0
+
+{ (-13 : -3633 : 4), (-1 : 0 : 1), (1 : -1 : 0), (-13 : 3633 : 4), (1 : 1 : 0) }
+ 
+*/
+
+//// Rational points on X6
+
+X6_pts := BasePoints(map1);
+
+for pt in XS_points do
+X6_pts := X6_pts join Points(Pullback(map1*map2, pt));
+end for;
+
+X6_pts;
+
+/*
+
+Output:
+
+{@ (-6, -12), (-53882/9503, -6680/559), (-5/2, -5), (877855/918476, -8453/4156) @}
+
+*/
+
+_<x> := PolynomialRing(Rationals());
+
+for r0 in {-5/2,-53882/9503,877855/918476} do
+Phi6_r0 := Evaluate(Polynomial([Evaluate(c, r0) : c in Coefficients(Phi6)]), x);
+Roots(Phi6_r0);
+end for;
+
+/*
+
+Output:
+
+[]
+[]
+[]
+
+*/
+
