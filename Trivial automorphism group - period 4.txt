@@ -33,7 +33,6 @@ Gsubs := SubgroupLattice(G); // The poset of conjugacy classes of subgroups of G
 W := WreathProduct(CyclicGroup(4),Sym(3));
 IsConjugate(Sym(12),G,W);
 
-
 /*
 The following function determines whether the given 
 permutation group H has an element with cycle structure s.
