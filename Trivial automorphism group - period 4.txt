@@ -1,0 +1,800 @@
+
+/* 
+This file contains the code used for the calculations related to
+the fourth dynatomic groups of maps with trivial automorphism group.
+In particular, this includes code for Lemmas 4.3, 4.4, and 4.5,
+as well as Propositions 4.6, 5.1(b), and 5.3(b).
+*/
+
+
+//// Computing the Galois group of Phi_4 and its lattice of subgroups.
+
+F<t> := PolynomialRing(Rationals());
+_<x> := PolynomialRing(F);
+
+Phi4 := x^12 - 4*t*x^11 + (7*t^2 + 5*t)*x^10 + (-6*t^3 - 18*t^2 - t)*x^9 + (2*t^4 + 25*t^3
+    + 16*t^2)*x^8 + (-12*t^4 - 44*t^3 - 6*t^2)*x^7 + (33*t^4 + 43*t^3 + t^2)*x^6 +
+    (-55*t^4 - 25*t^3)*x^5 + (61*t^4 + 8*t^3)*x^4 + (-46*t^4 - t^3)*x^3 + 
+    23*t^4*x^2 - 7*t^4*x + t^4;
+
+assert Discriminant(Phi4) eq t^44*(4*t^2 - 44*t + 125)^3*(3*t^2 - 14*t + 27)^4;
+
+G,_,S := GaloisGroup(Phi4);
+
+Gsubs := SubgroupLattice(G); // The poset of conjugacy classes of subgroups of G
+
+
+//// Checking that G is isomorphic to the appropriate wreath product.
+
+W := WreathProduct(CyclicGroup(4),Sym(3));
+assert IsConjugate(Sym(12),G,W);
+
+
+/*
+The following function determines whether the given 
+permutation group H has an element with cycle structure s.
+*/
+
+HasCycleStructure := function(H, s)
+for h in H do
+if CycleStructure(h) eq s then
+return true;
+end if;
+end for;
+return false;
+end function;
+
+//// Given a subgroup H of G, this function returns the curve Y_H.
+
+Y := function(H)
+qH := GaloisSubgroup(S, H);
+AA := AffineSpace(Rationals(),2);
+f := Evaluate(Polynomial([Evaluate(c, AA.1) : c in Coefficients(qH)]), AA.2);
+return Curve(AA, f);
+end function;
+
+
+//// Labeling the maximal subgroups of G.
+
+for i in MaximalSubgroups(Gsubs ! G) do
+m := Group(i);
+if IdentifyGroup(m) eq <192,944> then
+M1 := m;
+elif Order(m) eq 128 then
+M2 := m;
+elif Order(m) eq 96 then
+M3 := m;
+elif IdentifyGroup(m) eq <192,188> then
+M4 := m;
+elif IdentifyGroup(m) eq <192,182> then
+M5 := m;
+end if;
+end for;
+
+
+//// Labeling the Maximal subgroups of M1.
+
+for i in MaximalSubgroups(Gsubs ! M1) do
+m := Group(i);
+if Order(m) eq 48 then
+A1 := m;
+elif
+Order(m) eq 64 then
+A2 := m;
+elif IdentifyGroup(m) eq <96,68> then
+A3 := m;
+elif IdentifyGroup(m) eq <96,64> and HasCycleStructure(m,[<2,6>]) then
+A4 := m;
+elif IdentifyGroup(m) eq <96,64> and not HasCycleStructure(m,[<2,6>]) then
+A5 := m;
+end if;
+end for;
+
+
+//// Labeling the maximal subgroups of M2.
+
+for i in MaximalSubgroups(Gsubs ! M2) do
+m := Group(i);
+if IdentifyGroup(m) eq <64,101> and not HasCycleStructure(m,[<8,1>,<4,1>]) then
+B1 := m; 
+elif IdentifyGroup(m) eq <64,198> then
+B2 := m;
+elif IdentifyGroup(m) eq <64,85> then
+B3 := m;
+elif IdentifyGroup(m) eq <64,20> and not HasCycleStructure(m,[<8,1>,<4,1>]) then
+B4 := m;
+elif IdentifyGroup(m) eq <64,55> then
+B5 := m;
+elif IdentifyGroup(m) eq <64,20> and HasCycleStructure(m,[<8,1>,<4,1>]) then
+B6 := m;
+elif IdentifyGroup(m) eq <64,101> and HasCycleStructure(m,[<8,1>,<4,1>]) then
+B7 := m;
+end if;
+end for;
+
+
+//// Labeling two maximal subgroups of M3.
+
+for i in MaximalSubgroups(Gsubs ! M3) do
+m := Group(i);
+if Order(m) eq 24 then
+i;
+C1 := m;
+elif Order(m) eq 32 then
+i;
+C2 := m;
+end if;
+end for;
+
+
+//// Labeling one maximal subgroup of B1.
+
+for i in MaximalSubgroups(Gsubs ! B1) do
+m := Group(i);
+if IdentifyGroup(m) eq <32,11> and not HasCycleStructure(m,[<8,1>,<2,2>]) and not HasCycleStructure(m,[<2,6>]) then
+i;
+J := m; 
+end if;
+end for;
+
+
+//// Labeling one maximal subgroup of B2.
+
+for i in MaximalSubgroups(Gsubs ! B2) do
+m := Group(i);
+if IdentifyGroup(m) eq <32, 25> and HasCycleStructure(m,[<4, 1>, <2, 2>, <1, 4>]) and HasCycleStructure(m,[<4, 1>, <1, 8>]) then
+i;
+K := m;
+end if;
+end for;
+
+
+//// Computing rational roots of discriminants.
+
+LabeledSubgroups := {M1,M2,M3,M4,M5,A1,A2,A3,A4,A5,B1,B2,B3,B4,B5,B6,B7,J,K};
+
+LabeledPolynomials := {GaloisSubgroup(S,H) : H in LabeledSubgroups} join {Phi4};
+
+Discriminants := {};
+
+for poly in LabeledPolynomials do
+Discriminants := Discriminants join {d[1] : d in Roots(Discriminant(poly))};
+end for;
+
+Discriminants;
+
+/*
+
+Output:
+
+{ 0, 1, 3/2, 11/2 }
+
+*/
+
+
+//// The set denoted \mathcal{F} in the paper.
+RuledOut := {M4,M5,A2,A3,A4,A5,B3,B4,B6,B7,J};
+
+//// The set denoted \mathcal{R} in the paper.
+Realized := {G,M1,M2,M3,A1,B1,B2,C1,C2,K};
+
+
+
+//// *** What follows is the proof of Lemma 4.3 in the paper. *** ////
+
+
+// This function attempts to realize a given group H in the form G_{4,v}.
+
+RealizeGroup := function(H, height_bound)
+test_values := {@ p[1] : p in PointSearch(Y(H),height_bound) @};
+realizations := {};
+
+_<x> := PolynomialRing(Rationals());
+
+for v in test_values do
+Phi4v := x^12 - 4*v*x^11 + (7*v^2 + 5*v)*x^10 + (-6*v^3 - 18*v^2 - v)*x^9 + (2*v^4 +
+    25*v^3 + 16*v^2)*x^8 + (-12*v^4 - 44*v^3 - 6*v^2)*x^7 + (33*v^4 + 43*v^3 +
+    v^2)*x^6 + (-55*v^4 - 25*v^3)*x^5 + (61*v^4 + 8*v^3)*x^4 + (-46*v^4 -
+    v^3)*x^3 + 23*v^4*x^2 - 7*v^4*x + v^4;
+G4v := GaloisGroup(Phi4v);
+
+if IsConjugate(Sym(12),G4v,H) then
+Include(~realizations, v);
+end if;
+end for;
+return realizations;
+end function;
+
+RealizeGroup(M1,200);
+
+for H in [M2,M3,A1,B1,C1,K] do
+RealizeGroup(H,100);
+end for;
+
+RealizeGroup(B2,10^3);
+
+RealizeGroup(C2,10^5);
+
+/*
+
+Output:
+
+{ 11/2 }
+{ -8/7, -27/38, -1/3, -8/57, -1/14, 1/105, 1/21, 8/95, 27/95, 8/21, 1, 27/14 }
+{ 3/2 }
+{ 25/84, 25/6 }
+{ -1/84, 1/6 }
+{ 5 }
+{ 8/3 }
+{ 27/7 }
+{ 125/21 }
+
+*/
+
+
+
+//// *** Proof of Lemma 4.4 in the paper. *** ////
+
+
+//// The curve Y_M4 is birational to a conic with no rational point.
+
+YM4 := Y(M4);
+conic, M4map := Conic(ProjectiveClosure(YM4));
+BasePoints(M4map);
+assert not HasRationalPoint(conic);
+
+/*
+
+Output:
+
+{@ (0 : 0 : 1), (0 : 1 : 0) @}
+
+*/
+
+//// Hence (0,0) is the only rational point on Y_M4.
+
+
+
+//// The curve Y_A5 is birational to a conic with no rational point.
+
+YA5 := Y(A5);
+conic, A5map := Conic(ProjectiveClosure(YA5));
+BasePoints(A5map);
+assert not HasRationalPoint(conic);
+
+/*
+
+Output:
+
+{@ (0 : 0 : 1), (1 : 0 : 1), (0 : 1 : 0) @}
+
+*/
+
+//// Hence every rational point on Y_A5 has t-coordinate 0 or 1.
+
+
+//// The curve Y_J is birational to a conic with no rational point.
+
+YJ := Y(J);
+conic, Jmap := Conic(ProjectiveClosure(YJ));
+BasePoints(Jmap);
+assert not HasRationalPoint(conic);
+
+/*
+
+Output:
+
+{@ (0 : 0 : 1), (-1 : 1 : 0), (1 : 0 : 0) @}
+
+*/
+
+
+//// Hence (0,0) is the only rational point on Y_J.
+
+
+//// The curve Y_M5 is elliptic of rank 0 over a quadratic field.
+
+YM5 := Y(M5);
+QF<i> := QuadraticField(-1);
+YM5 := ChangeRing(YM5, QF);
+XM5 := ProjectiveClosure(YM5);
+E, M5map := EllipticCurve(XM5, XM5 ! [11/2 + i,0,1]);
+assert Rank(E) eq 0;
+
+
+//// Finding all Q(i)-rational points on Y_M5.
+
+XM5_pts := BasePoints(M5map);
+T, Tmap := TorsionSubgroup(E);
+Epts := [Tmap(y): y in T];
+for pt in Epts do
+XM5_pts := XM5_pts join Points(Pullback(M5map, pt));
+end for;
+XM5_pts;
+
+/*
+
+Output:
+
+{@ (0 : 0 : 1), (1 : 0 : 1), (1/2*(-2*i + 11) : 0 : 1), (0 : 1 : 0), (1/2*(2*i +
+    11) : 0 : 1) @}
+
+*/
+
+
+//// Hence every rational point on Y_M5 has t-coordinate 0 or 1.
+
+
+//// The curve Y_B6 is elliptic of rank 0 over a quadratic field.
+
+YB6 := Y(B6);
+QF<i> := QuadraticField(-1);
+YB6 := ChangeRing(YB6, QF);
+XB6 := ProjectiveClosure(YB6);
+E, B6map := EllipticCurve(XB6, XB6 ! [11/2 + i,0,1]);
+assert Rank(E) eq 0;
+
+
+//// Finding all Q(i)-rational points on Y_B6.
+
+XB6_pts := BasePoints(B6map);
+T, Tmap := TorsionSubgroup(E);
+Epts := [Tmap(y): y in T];
+for pt in Epts do
+XB6_pts := XB6_pts join Points(Pullback(B6map, pt));
+end for;
+XB6_pts;
+
+/*
+
+Output:
+
+{@ (0 : 0 : 1), (1 : 0 : 1), (1/2*(-2*i + 11) : 0 : 1), (1/2*(2*i + 11) : 0 : 
+    1), (0 : 1 : 0), (2*i + 2 : -2*i + 8 : 1), (-2*i + 2 : -2*i - 8 : 1), (-2*i 
+    + 2 : 2*i + 8 : 1), (2*i + 2 : 2*i - 8 : 1) @}
+
+*/
+
+//// Hence every rational point on Y_B6 has t-coordinate 0 or 1.
+
+
+//// The curve Y_A2 has genus 2 and Mordell-Weil rank 1.
+
+YA2 := Y(A2);
+_,XA2,map1 := IsHyperelliptic(YA2);
+X,map2 := SimplifiedModel(XA2);
+X;
+JX := Jacobian(X);
+RankBounds(JX);
+
+/*
+
+Output:
+
+Hyperelliptic Curve defined by y^2 = 4*x^6 - 20*x^5 + 9*x^4 + 22*x^3 + 127*x^2 +
+    98*x + 85 over Rational Field
+
+1 1
+
+*/
+
+
+//// Applying Chabauty-Coleman to find all rational points on Y_A2.
+
+P := JX ! [X![1,-2,0],X![1,2,0]];
+assert Order(P) eq 0; // indicates infinite order
+Xpts := Chabauty(P); // all rational points on X
+YA2_pts := BasePoints(map1);
+A2map := map1*map2;
+for pt in Xpts do
+YA2_pts := YA2_pts join Points(Pullback(A2map, pt));
+end for;
+YA2_pts;
+
+/*
+
+Output:
+
+{@ (0, 0), (1, -2) @}
+
+*/
+
+
+//// Hence every rational point on Y_A2 has t-coordinate 0 or 1.
+
+
+//// The curve Y_A4 has genus 2 and Mordell-Weil rank 0.
+
+YA4 := Y(A4);
+_,XA4,map1 := IsHyperelliptic(YA4);
+X,map2 := SimplifiedModel(XA4);
+JX := Jacobian(X);
+assert RankBound(JX) eq 0;
+Chabauty0(JX); // Rational points on X
+BasePoints(map1);
+
+/*
+
+Output:
+
+{@ @}
+
+{@ (0, 0), (1, 0) @}
+
+*/
+
+//// Hence every rational point on Y_A4 has t-coordinate 0 or 1.
+
+
+//// The curve Y_B7 has genus 2 and Mordell-Weil rank 1.
+
+YB7 := Y(B7);
+_,XB7,map1 := IsHyperelliptic(YB7);
+X,map2 := SimplifiedModel(XB7);
+X;
+JX := Jacobian(X);
+RankBounds(JX);
+
+/*
+
+Output:
+
+Hyperelliptic Curve defined by y^2 = 4*x^6 - 20*x^5 + 9*x^4 + 22*x^3 + 127*x^2 +
+    98*x + 85 over Rational Field
+
+1 1
+
+*/
+
+
+//// Applying Chabauty-Coleman to find all rational points on Y_B7.
+
+P := JX ! [X![1,-2,0],X![1,2,0]];
+assert Order(P) eq 0;
+Xpts := Chabauty(P);
+YB7_pts := BasePoints(map1);
+B7map := map1*map2;
+for pt in Xpts do
+YB7_pts := YB7_pts join Points(Pullback(B7map, pt));
+end for;
+YB7_pts;
+
+/*
+
+Output:
+
+0
+
+{@ (0, 0), (1, -2) @}
+
+*/
+
+//// Hence every rational point on Y_B7 has t-coordinate 0 or 1.
+
+
+//// The curve Y_K has genus 2 and Mordell-Weil rank 1.
+
+YK := Y(K);
+_,XK,map1 := IsHyperelliptic(YK);
+X,map2 := SimplifiedModel(XK);
+X;
+JX := Jacobian(X);
+RankBounds(JX);
+
+/*
+
+Output:
+
+Hyperelliptic Curve defined by y^2 = x^6 - 8*x^4 + 6*x^3 - 8*x^2 + 1 over 
+Rational Field
+
+1 1
+
+*/
+
+
+//// Applying Chabauty-Coleman to find all rational points on Y_K.
+
+P := JX ! [X![1,1,0],X![1,-1,0]];
+assert Order(P) eq 0;
+Xpts := Chabauty(P);
+YK_pts := BasePoints(map1);
+Kmap := map1*map2;
+for pt in Xpts do
+YK_pts := YK_pts join Points(Pullback(Kmap,pt));
+end for;
+YK_pts;
+
+/*
+
+Output:
+
+{@ (0, 0), (8/3, -8/3), (8/3, -10/3) @}
+
+*/
+
+
+//// Hence every rational point on Y_K has t-coordinate 0 or 8/3.
+
+
+//// The curve Y_B3 is birational to a genus-2 curve with no rational point.
+
+YB3 := Y(B3);
+_,XB3,map := IsHyperelliptic(YB3);
+X := SimplifiedModel(XB3);
+X;
+_<x> := PolynomialRing(Rationals());
+assert not HasPointsEverywhereLocally(-3*x^6 - 14*x^5 - x^4 + 22*x^3 - 103*x^2 + 92*x - 68,2);
+BasePoints(map);
+
+/*
+
+Output:
+
+Hyperelliptic Curve defined by y^2 = -3*x^6 - 14*x^5 - x^4 + 22*x^3 - 103*x^2 + 
+    92*x - 68 over Rational Field
+
+{@ (0, 0), (1, 0) @}
+
+*/
+
+
+//// Hence every rational point on Y_B3 has t-coordinate 0 or 1.
+
+
+//// The curve Y_B4 is birational to a hyperelliptic genus-3 curve with no rational point.
+
+YB4 := Y(B4);
+_,XB4,map := IsHyperelliptic(YB4);
+X := SimplifiedModel(XB4);
+X;
+_<x> := PolynomialRing(Rationals());
+assert not HasPointsEverywhereLocally(-12*x^8 + 44*x^7 + 37*x^6 - 22*x^5 - 505*x^4 - 890*x^3 - 1155*x^2 - 732*x - 340,2);
+BasePoints(map);
+
+/*
+
+Output:
+
+Hyperelliptic Curve defined by y^2 = -12*x^8 + 44*x^7 + 37*x^6 - 22*x^5 - 
+    505*x^4 - 890*x^3 - 1155*x^2 - 732*x - 340 over Rational Field
+
+{@ (0, 0), (1, 0) @}
+
+*/
+
+//// Hence every rational point on Y_B4 has t-coordinate 0 or 1.
+
+
+
+//// The curve Y_A3 maps to a hyperelliptic curve of genus 1 with no rational point.
+
+//// The polynomial q_A3 is quadratic in x^2, equal to f(t,x^2) with f as below.
+
+k<t> := PolynomialRing(Rationals());
+_<x> := PolynomialRing(k);
+
+f := x^2 + (-8*t^6 + 104*t^5 - 428*t^4 + 560*t^3 - 196*t^2)*x + 16*t^12 - 416*t^11 
+    + 4464*t^10 - 25344*t^9 + 81648*t^8 - 151328*t^7 + 161744*t^6 - 93632*t^5 + 
+    23104*t^4;
+
+assert Discriminant(f) eq -16*t^4*(t - 1)^2*(3*t^2 - 14*t + 27)*(4*t^2 - 44*t + 125);
+
+assert not HasPointsEverywhereLocally(-(3*t^2 - 14*t + 27)*(4*t^2 - 44*t + 125),2);
+
+
+//// Hence every rational point on Y_A3 has t-coordinate 0 or 1.
+
+
+//// *** This completes the calculations for Lemma 4.4. *** ////
+
+
+
+//// *** Proof of Lemma 4.5. *** ////
+
+PointsKnown := RuledOut join {K};
+
+/*
+The following function determines if the subgroup H of G is
+contained in a G-conjugate of one of the PointsKnown groups.
+*/
+
+IsInPointsKnownGroup := function(H)
+return true in {Gsubs ! H le Gsubs ! gp : gp in PointsKnown};
+end function;
+
+// Check if H is conjugate to a Realized group.
+IsRealized := function(H)
+return true in {IsConjugate(G,H,gp): gp in Realized};
+end function;
+
+
+//// Groups whose realizability as G_{4,v} is unknown.
+
+UnknownGroups := {};
+
+for i in Gsubs do
+H := Group(i);
+if not IsRealized(H) and not IsInPointsKnownGroup(H) then
+Include(~UnknownGroups,H);
+end if;
+end for;
+
+assert #UnknownGroups eq 16;
+
+
+//// *** Proof of Proposition 4.6. *** ////
+
+
+_<x> := PolynomialRing(Rationals());
+
+for v in [1, 3/2, 8/3, 11/2] do
+Phi4v := x^12 - 4*v*x^11 + (7*v^2 + 5*v)*x^10 + (-6*v^3 - 18*v^2 - v)*x^9 + (2*v^4 +
+    25*v^3 + 16*v^2)*x^8 + (-12*v^4 - 44*v^3 - 6*v^2)*x^7 + (33*v^4 + 43*v^3 +
+    v^2)*x^6 + (-55*v^4 - 25*v^3)*x^5 + (61*v^4 + 8*v^3)*x^4 + (-46*v^4 -
+    v^3)*x^3 + 23*v^4*x^2 - 7*v^4*x + v^4;
+G4v := GaloisGroup(Phi4v);
+
+for H in [M1,M2,K] do
+if IsConjugate(Sym(12),G4v,H) then
+v, H;
+end if;
+end for;
+end for;
+
+/*
+
+Output:
+
+11/2 Permutation group M1
+
+1 Permutation group M2
+
+8/3 Permutation group K
+
+
+*/
+
+
+//// *** Calculations for Remark 4.7. *** ////
+
+//// There are two unknown groups contained in C1.
+
+for H in UnknownGroups do
+if Gsubs ! H le Gsubs ! C1 then
+Order(H);
+end if;
+end for;
+
+/*
+
+Output:
+
+12
+8
+
+*/
+
+//// Attempts to compute basic geometric information about Y_C1.
+
+Y_C1 := Y(C1);
+assert Genus(Y_C1) eq 8;
+assert IsAbsolutelyIrreducible(Y_C1);
+IsHyperelliptic(Y_C1);
+IsGeometricallyHyperelliptic(Y_C1);
+AutomorphismGroup(ProjectiveClosure(Y_C1));
+
+
+//// Computing the genera of the curves Y_H corresponding to
+//// unknown groups H to show that they are all greater than 1.
+//// Note that it suffices to consider only groups that are not
+//// properly contained in other unknown groups or in C1.
+
+LargestUnknownGroups := {};
+
+c1 := Gsubs ! C1;
+
+for H in UnknownGroups do
+h := Gsubs ! H;
+if not h le c1 then
+H_is_largest := true;
+for J in UnknownGroups do
+j := Gsubs ! J;
+if h lt j then
+H_is_largest := false;
+break J;
+end if;
+end for;
+if H_is_largest then
+Include(~LargestUnknownGroups,H);
+end if;
+end if;
+end for;
+
+assert #LargestUnknownGroups eq 9;
+
+
+//// long computation (9692 s)
+
+{Genus(Y(H)): H in LargestUnknownGroups};
+
+
+/*
+
+Output: 
+
+{ 2, 3, 4, 5, 6, 7 }
+
+*/
+
+
+
+//// *** Proof of Proposition 5.1(b). *** ////
+
+possible_groups := Realized join UnknownGroups;
+
+//// Computing indices of stabilizers.
+
+degrees := {};
+for H in possible_groups do
+degrees := degrees join {Index(H,Stabilizer(H,i)) : i in [1..12]};
+end for;
+degrees;
+
+/*
+
+Output:
+
+{ 2, 4, 6, 8, 12 }
+
+*/
+
+
+//// *** Proof of Proposition 5.3(b). *** ////
+
+/*
+Given the Galois group of a polynomial F with rational coefficients,
+this function computes the density of the set of primes p such that 
+F has a root in the p-adic field Q_p.
+*/
+
+Density := function(GG);
+stabilizer_union := {};
+for i := 1 to #GSet(GG) do
+stabilizer_union := stabilizer_union join ElementSet(GG, Stabilizer(GG, i));
+end for;
+return #stabilizer_union/#GG;
+end function;
+
+possible_densities := {Density(GG): GG in possible_groups};
+
+possible_densities;
+Maximum(possible_densities);
+
+/*
+
+Output:
+
+{ 1/6, 19/96, 85/384, 43/192, 1/4, 5/16, 1/3, 11/32, 25/64, 19/48, 13/32, 
+53/128, 1/2, 17/32, 39/64, 5/8 }
+
+5/8
+
+*/
+
+//// Densities for the groups known to be realized.
+
+realizable_densities := {Density(GG): GG in Realized};
+realizable_densities;
+Maximum(realizable_densities);
+
+/*
+
+Output:
+
+{ 1/6, 19/96, 85/384, 43/192, 11/32, 25/64, 19/48, 53/128, 17/32, 39/64 }
+
+
+39/64
+
+*/
