@@ -1,0 +1,55 @@
+/* 
+This file contains the code used for calculations in Section 5.1. This includes:
+ - Proof of Proposition 5.1(a) (starting on line 8),
+ - Proof of Proposition 5.1(b) (line 34).
+*/
+
+
+//// *** Proof of Proposition 5.1(a) *** ////
+
+_<x> := PolynomialRing(Rationals());
+v := 3;
+Phi3v := x^6 - 2*v*x^5 + (v^2 + 3*v)*x^4 + (-3*v^2 - v)*x^3 + 4*v^2*x^2 - 3*v^2*x + v^2;
+G3v := GaloisGroup(Phi3v);
+
+S6 := Sym(6);
+pi := S6 ! [{@ 1,2,3 @}, {@ 4,5,6 @}];
+sigma := S6 ! [{@ 1,2,3 @},{@ 4,6,5 @}];
+W := Centralizer(S6, pi);
+C := sub<S6|[S6![{@ 1,6 @},{@ 2,4 @},{@ 3,5 @}],sigma]>;
+
+possible_groups := {W,C,G3v};
+
+{IsTransitive(H): H in possible_groups};
+
+/*
+
+Output:
+
+{ true }
+
+*/
+
+
+//// *** Proof of Proposition 5.1(b) *** ////
+
+// Note: lines 16-183 and 593-621 from the code for Section 4.2 must be run before this.
+
+possible_groups := Realized join UnknownGroups; // The set \mathcal{P} in the paper
+assert #possible_groups eq 26;
+
+//// Computing indices of stabilizers.
+
+degrees := {};
+for H in possible_groups do
+degrees := degrees join {Index(H,Stabilizer(H,i)) : i in [1..12]};
+end for;
+degrees;
+
+/*
+
+Output:
+
+{ 2, 4, 6, 8, 12 }
+
+*/
