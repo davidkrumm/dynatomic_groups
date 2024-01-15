@@ -1,0 +1,410 @@
+/* 
+This file contains the code used for calculations in Section 3.2. This includes:
+ - Preliminary computations (starting on line 8),
+ - Proof of Lemma 3.4 (line 137).
+*/ 
+
+
+//// *** Setup preceding Lemma 3.4 *** ////
+
+
+//// Computing the Galois group of Phi_3 and its lattice of subgroups.
+ 
+F<t> := PolynomialRing(Rationals());
+_<x> := PolynomialRing(F);
+
+Phi3 := (t^4 - t^3)*x^6 - 9*t^3*x^5 + (3*t^3 + 33*t^2)*x^4 + (-t^3 - 26*t^2)*x^3 + (18*t^2 - 27*t)*x^2 + (-6*t^2 + 15*t)*x + t^2 - 4*t + 3;
+
+assert Discriminant(Phi3) eq -19683*(t*(t - 4))^15;
+
+G,_,S := GaloisGroup(Phi3);
+
+Gsubs := SubgroupLattice(G); // The poset of conjugacy classes of subgroups of G
+
+//// Checking that G is isomorphic to the appropriate wreath product.
+
+W := WreathProduct(CyclicGroup(3),Sym(2));
+assert IsConjugate(Sym(6),G,W);
+
+//// Labeling the maximal subgroups of G.
+
+for i in MaximalSubgroups(Gsubs ! G) do
+m := Group(i);
+if Order(m) eq 9 then
+A := m;
+elif Order(m) eq 6 and IsCyclic(m) then
+B := m;
+elif Order(m) eq 6 and not IsCyclic(m) then
+C := m;
+end if;
+end for;
+
+
+//// Labeling the maximal subgroups of A.
+
+for i in MaximalSubgroups(Gsubs ! A) do
+m := Group(i);
+if i le Gsubs ! C then
+J := m;
+elif i le Gsubs ! B then
+M := m;
+else
+K := m;
+end if;
+end for;
+
+
+//// Checking that G has a unique subgroup of order 2, up to conjugacy.
+
+[Order(i) : i in Gsubs];
+
+/*
+
+Output:
+
+[ 1, 2, 3, 3, 3, 6, 6, 9, 18 ]
+
+*/
+
+
+//// Labeling the unique subgroup of order 2.
+
+H := Gsubs[2];
+
+
+//// Checking that H, M are the maximal subgroups of B,
+//// and H, J are the maximal subgroups of C.
+
+assert MaximalSubgroups(Gsubs ! B) eq {Gsubs ! H, Gsubs ! M};
+assert MaximalSubgroups(Gsubs ! C) eq {Gsubs ! H, Gsubs ! J};
+
+
+//// Computing defining polynomials of fixed fields.
+
+qA,_ := GaloisSubgroup(S, A);
+qB,_ := GaloisSubgroup(S, B);
+qC,_ := GaloisSubgroup(S, C);
+qH,_ := GaloisSubgroup(S, H);
+qJ,_ := GaloisSubgroup(S, J);
+qK,_ := GaloisSubgroup(S, K);
+qM,_ := GaloisSubgroup(S, M);
+
+/*
+
+For printing the above polynomials:
+
+R := CoefficientRing(qA);
+AssignNames(~R,["t"]);
+R := Parent(qA);
+AssignNames(~R,["x"]);
+qA;
+qB;
+qC;
+qH;
+qJ;
+qK;
+qM;
+
+*/
+
+//// Computing rational roots of discriminants.
+
+Roots(Discriminant(Phi3));
+Roots(Discriminant(qA));
+Roots(Discriminant(qB));
+Roots(Discriminant(qC));
+Roots(Discriminant(qH));
+Roots(Discriminant(qJ));
+Roots(Discriminant(qK));
+Roots(Discriminant(qM));
+
+/*
+
+Output:
+
+[ <0, 15>, <4, 15> ]
+[ <0, 5>, <4, 1> ]
+[ <0, 31>, <1, 6>, <4, 7> ]
+[ <0, 30>, <1, 6>, <4, 6> ]
+[ <0, 183>, <1, 36>, <4, 39> ]
+[ <0, 105>, <1, 12>, <4, 21> ]
+[ <0, 75>, <1, 20>, <4, 15> ]
+[ <0, 107>, <1, 12>, <4, 23> ]
+
+*/
+
+
+//// *** Proof of Lemma 3.4 *** ////
+
+
+//// Parametrizing the curves Y_A, Y_B, and Y_K.
+
+AA<t,x> := AffineSpace(Rationals(),2);
+fA := x^2 + 9*t^3*x + 27*t^6 - 27*t^5;
+fB := x^3 + (-18*t^7 + 117*t^6 + 144*t^5)*x^2 + (-324*t^13 - 729*t^12 + 15552*t^11 + 
+    5184*t^10)*x + 216*t^22 - 3240*t^21 + 18792*t^20 - 54378*t^19 + 59859*t^18 -
+    16848*t^17 + 527040*t^16;
+fK := x^6 + 9*t^3*x^5 + (3*t^7 + 30*t^6 - 33*t^5)*x^4 + (t^11 + 24*t^10 - 51*t^9 + 
+    26*t^8)*x^3 + (18*t^14 - 81*t^13 + 135*t^12 - 99*t^11 + 27*t^10)*x^2 + 
+    (6*t^18 - 39*t^17 + 96*t^16 - 114*t^15 + 66*t^14 - 15*t^13)*x + t^22 - 
+    9*t^21 + 33*t^20 - 65*t^19 + 75*t^18 - 51*t^17 + 19*t^16 - 3*t^15;
+YA := Curve(AA, fA);
+YB := Curve(AA, fB);
+YK := Curve(AA, fK);
+
+P1<v,w> := Curve(ProjectiveSpace(Rationals(),1));
+
+XA := ProjectiveClosure(YA);
+Amap := Parametrization(XA, XA ! [1,0,1], P1);
+Amap := ImproveParametrization(Amap);
+
+XB := ProjectiveClosure(YB);
+Bmap := Parametrization(XB, XB ! [2,-3264,1], P1);
+Bmap := ImproveParametrization(Bmap);
+
+XK := ProjectiveClosure(YK);
+Kmap := Parametrization(XK, XK ! [3,0,1], P1);
+Kmap := ImproveParametrization(Kmap);
+
+DefiningPolynomials(Amap); // Components of the map P1 --> XA
+DefiningPolynomials(Bmap);
+DefiningPolynomials(Kmap);
+
+/*
+
+Output:
+
+[
+    v^6 + 2*v^3*w^3 + w^6,
+    -9*v^5*w - 45*v^4*w^2 - 90*v^3*w^3 - 90*v^2*w^4 - 45*v*w^5 - 9*w^6,
+    v^6 - 3*v^5*w + 6*v^4*w^2 - 7*v^3*w^3 + 6*v^2*w^4 - 3*v*w^5 + w^6
+]
+
+[
+    -v^3*w^19 + 3*v^2*w^20,
+    -6*v^22 + 126*v^21*w - 1134*v^20*w^2 + 5640*v^19*w^3 - 16479*v^18*w^4 + 
+        26730*v^17*w^5 - 15657*v^16*w^6 - 18036*v^15*w^7 + 29565*v^14*w^8 + 
+        4212*v^13*w^9 - 35721*v^12*w^10 + 34992*v^11*w^11 - 17496*v^10*w^12,
+    w^22
+]
+
+[
+    v^22 + 2*v^21*w - 15*v^20*w^2 - 94*v^19*w^3 - 200*v^18*w^4 + 144*v^17*w^5 + 
+        2379*v^16*w^6 + 8988*v^15*w^7 + 22347*v^14*w^8 + 42454*v^13*w^9 + 
+        65153*v^12*w^10 + 82974*v^11*w^11 + 88904*v^10*w^12 + 80632*v^9*w^13 + 
+        61929*v^8*w^14 + 40092*v^7*w^15 + 21657*v^6*w^16 + 9594*v^5*w^17 + 
+        3391*v^4*w^18 + 914*v^3*w^19 + 174*v^2*w^20 + 20*v*w^21 + w^22,
+    9*v^21*w - 126*v^20*w^2 + 369*v^19*w^3 + 1800*v^18*w^4 - 7857*v^17*w^5 - 
+        16686*v^16*w^6 + 63207*v^15*w^7 + 139023*v^14*w^8 - 201150*v^13*w^9 - 
+        721539*v^12*w^10 - 219852*v^11*w^11 + 1270989*v^10*w^12 + 
+        1780371*v^9*w^13 + 542295*v^8*w^14 - 811053*v^7*w^15 - 1028160*v^6*w^16 
+        - 567108*v^5*w^17 - 183114*v^4*w^18 - 36630*v^3*w^19 - 4473*v^2*w^20 - 
+        306*v*w^21 - 9*w^22,
+    v^22 + 11*v^21*w + 66*v^20*w^2 + 275*v^19*w^3 + 880*v^18*w^4 + 2277*v^17*w^5
+        + 4917*v^16*w^6 + 9042*v^15*w^7 + 14355*v^14*w^8 + 19855*v^13*w^9 + 
+        24068*v^12*w^10 + 25653*v^11*w^11 + 24068*v^10*w^12 + 19855*v^9*w^13 + 
+        14355*v^8*w^14 + 9042*v^7*w^15 + 4917*v^6*w^16 + 2277*v^5*w^17 + 
+        880*v^4*w^18 + 275*v^3*w^19 + 66*v^2*w^20 + 11*v*w^21 + w^22
+]
+
+*/
+
+
+//// Dehomogenizing to obtain parametrizations of Y_A, Y_B, Y_K.
+
+A1<v> := AffineSpace(Rationals(),1);
+alpha := (1 + v)^2/(1 - v + v^2);
+map2 := -9*(1 + v)^5/(1 - v + v^2)^3;
+Amap := map<A1->YA|[alpha,map2]>;
+bool, Amap_inverse := IsInvertible(Amap);
+assert bool;
+BasePoints(Amap); // Rational points where the map A1 --> YA is undefined
+BasePoints(Amap_inverse);
+
+beta := v^2*(3 - v);
+map2 := -3*(3 - v)^6*v^10*(8 + 3*v^2 + 10*v^3 - 6*v^5 + 2*v^6);
+Bmap := map<A1->YB|[beta,map2]>;
+bool, Bmap_inverse := IsInvertible(Bmap);
+assert bool;
+BasePoints(Bmap);
+BasePoints(Bmap_inverse);
+
+kappa := (v^3 - 3*v^2 - 6*v - 1)^2/(1 + v + v^2)^3;
+map2 := 9*(v - 1)*(v + 1)^2*(v^3 - 3*v - 1)*(v^3 - 3*v^2 - 6*v - 1)^5/(1 + v + v^2)^11;
+Kmap := map<A1->YK|[kappa,map2]>;
+bool, Kmap_inverse := IsInvertible(Kmap);
+assert bool;
+BasePoints(Kmap);
+BasePoints(Kmap_inverse);
+
+/*
+
+Output:
+
+{@ @}
+{@ (0, 0), (1, -9), (1, 0) @}
+
+{@ @}
+{@ (0, 0), (1, -81), (4, -110592) @}
+
+{@ @}
+{@ (0, 0), (1, 0), (4, -96) @}
+
+*/
+
+
+//// Finding all rational points on the curve Y_C.
+
+//// Checking the factorization of q_C.
+
+_<y> := PolynomialRing(Rationals());
+L<g> := NumberField(y^3 - 3*y + 1);
+R<t> := PolynomialRing(L);
+_<x> := PolynomialRing(R);
+
+ u2 := 0;
+ w1 := 0;
+
+ u1 := 6*t^7 - 30*t^6 + 24*t^5;
+ u0 := -6*t^7 + 39*t^6 + 48*t^5 + x;
+ v2 := -6*t^7 + 30*t^6 - 24*t^5;
+ v1 := v2;
+ v0 := 6*t^7 - 21*t^6 + 96*t^5 + x;
+ w2 := -v2;
+ w0 := -18*t^7 + 99*t^6 + x;
+
+factor1 := u2*g^2 + u1*g + u0;
+factor2 := v2*g^2 + v1*g + v0;
+factor3 := w2*g^2 + w1*g + w0;
+
+fC := Evaluate(Polynomial([Evaluate(c, t) : c in Coefficients(qC)]), x);
+
+assert fC eq factor1*factor2*factor3;
+
+
+//// Finding rational points on 0-dimensional schemes.
+
+AA<t,x> := AffineSpace(Rationals(),2);
+ u2 := 0;
+ u1 := 6*t^7 - 30*t^6 + 24*t^5;
+ u0 := -6*t^7 + 39*t^6 + 48*t^5 + x;
+
+UU := Scheme(AA,[u0,u1,u2]);
+Dimension(UU);
+Points(UU);
+
+ v2 := -6*t^7 + 30*t^6 - 24*t^5;
+ v1 := v2;
+ v0 := 6*t^7 - 21*t^6 + 96*t^5 + x;
+
+VV := Scheme(AA,[v0,v1,v2]);
+Dimension(VV);
+Points(VV);
+
+ w2 := -v2;
+ w1 := 0;
+ w0 := -18*t^7 + 99*t^6 + x;
+
+WW := Scheme(AA,[w0,w1,w2]);
+Dimension(WW);
+Points(WW);
+
+
+/*
+
+Output:
+
+0
+{@ (0, 0), (1, -81), (4, -110592) @}
+0
+{@ (0, 0), (1, -81), (4, -110592) @}
+0
+{@ (0, 0), (1, -81), (4, -110592) @}
+
+*/
+
+//// Thus every rational point on Y_C has t-coordinate 0, 1, or 4.
+
+//// A search for rational points of small height on Y_C, for confirmation.
+
+AA<t,x> := AffineSpace(Rationals(),2);
+fC := Evaluate(Polynomial([Evaluate(c, t) : c in Coefficients(qC)]), x);
+YC := Curve(AA,fC);
+PointSearch(YC,10^6);
+
+/*
+
+Output:
+
+[ (1, -81), (0, 0), (4, -110592) ]
+
+*/
+
+
+//// Parametrizing the curve Y_M.
+//// We use the parametrizations of Y_A and Y_B.
+
+P1<v,w> := Curve(ProjectiveSpace(Rationals(),1));
+
+AA<x,y> := AffineSpace(Rationals(),2);
+f := (1 + x)^2 + (y - 3)*y^2*(1 - x + x^2); // The equation alpha(x) = beta(y)
+Y := Curve(AA, f);
+X := ProjectiveClosure(Y);
+map := Parametrization(X, X ! [1,-1,1], P1);
+map := ImproveParametrization(map);
+DefiningPolynomials(map);
+
+/*
+
+[
+    v^5 + v^4*w - 2*v^3*w^2 - 4*v^2*w^3 - 4*v*w^4 - w^5,
+    -v^5 - 4*v^4*w - v^3*w^2 + 7*v^2*w^3 + v*w^4 - 2*w^5,
+    v^5 + 4*v^4*w + 4*v^3*w^2 + 2*v^2*w^3 - v*w^4 - w^5
+]
+
+*/
+
+
+//// Finding the second coordinate of a parametrization of Y_M.
+//// We check that the polynomial q_M(mu(v),x) has roots in QQ(v).
+
+k<v> := FunctionField(Rationals());
+_<x> := PolynomialRing(k);
+
+m := (v^3 - 3*v - 1)/(v^3 + 3*v^2 - 1);
+t := (1 + m)^2/(1 - m + m^2); // t is equal to alpha(m), or mu(v).
+
+fM := Evaluate(Polynomial([Evaluate(c, t) : c in Coefficients(qM)]), x);
+fM_roots := Roots(fM);
+assert #fM_roots eq 6;
+
+
+//// Choosing a root p of the above polynomial,
+//// we have the parametrization (mu, p) of Y_M.
+
+
+//// Confirming we have a parametrization of YM.
+
+AA<t,x> := AffineSpace(Rationals(),2);
+
+fM := Evaluate(Polynomial([Evaluate(c, t) : c in Coefficients(qM)]), x);
+YM := Curve(AA, fM);
+
+A1<v> := AffineSpace(Rationals(),1);
+p := Evaluate(fM_roots[1][1],v);
+
+m := (v^3 - 3*v - 1)/(v^3 + 3*v^2 - 1);
+mu := (1 + m)^2/(1 - m + m^2);
+
+Mmap := map<A1->YM|[mu,p]>;
+bool, Mmap_inverse := IsInvertible(Mmap);
+assert bool;
+BasePoints(Mmap);
+
+/*
+
+Output: 
+
+{@ @}
+
+*/

@@ -1,0 +1,33 @@
+/* 
+This file contains the code used for calculations in Section 2.3. This includes:
+ - Proof of Lemma 2.6 (starting on line 7).
+*/
+
+
+//// *** Proof of Lemma 2.6 *** ////
+
+//// Finding all maps in C_2(Q) that have nontrivial automorphism group.
+
+AA<r,s> := AffineSpace(Rationals(),2);
+sym := -2*r^3 - r^2*s + r^2 + 8*r*s + 4*s^2 - 12*r - 12*s + 36;
+Z := Scheme(AA,[sym, 2*r + s]);
+Dimension(Z);
+Points(Z);
+
+/* 
+
+Output:
+
+0
+{@ (-6, 12) @}
+
+*/
+
+
+F<a,b,c> := FunctionField(Rationals(),3);
+_<x> := FunctionField(F);
+phi := (a*x + b)/(x^2 + c*x + b);
+p := x^3 + c*x^2 + (b - a)*x - b;
+q := (2*x + 2*c)*p + (a + 2*b)*x^2 + (2*a*c + 2*b*c)*x + a*b + 2*b^2 + b*c;
+assert x - phi eq p/(x^2 + c*x + b);
+assert 2 + Derivative(phi) eq q/(x^2 + c*x + b)^2; 
